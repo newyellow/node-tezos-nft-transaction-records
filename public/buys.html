@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tezos Buy Records</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="index.html">Tezos Records Viewer</a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="sales.html" class="nav-link">Sales</a>
+                <a href="buys.html" class="nav-link active">Buys</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>Tezos Buy Records</h1>
+            <p>Browse through NFT buy data with pagination</p>
+        </div>
+        
+        <div class="controls">
+            <div class="pagination-info">
+                <span id="pagination-info">Loading...</span>
+            </div>
+            <div class="pagination-controls">
+                <button class="btn btn-secondary" id="prev-btn" onclick="previousPage()" disabled>Previous</button>
+                <span id="page-info">Page 1</span>
+                <button class="btn btn-secondary" id="next-btn" onclick="nextPage()" disabled>Next</button>
+                <span>Go to:</span>
+                <input type="number" class="page-input" id="page-input" min="1" placeholder="Page">
+                <button class="go-btn" id="go-btn" onclick="goToPage()">Go</button>
+            </div>
+        </div>
+        
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading buy data...</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="pagination-info">
+                <span id="pagination-info-bottom">Loading...</span>
+            </div>
+            <div class="pagination-controls">
+                <button class="btn btn-secondary" id="prev-btn-bottom" onclick="previousPage()" disabled>Previous</button>
+                <span id="page-info-bottom">Page 1</span>
+                <button class="btn btn-secondary" id="next-btn-bottom" onclick="nextPage()" disabled>Next</button>
+                <span>Go to:</span>
+                <input type="number" class="page-input" id="page-input-bottom" min="1" placeholder="Page">
+                <button class="go-btn" id="go-btn-bottom" onclick="goToPage()">Go</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalRecords = 0;
+        const limit = 20;
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function loadBuyData(page = 1) {
+            try {
+                const response = await fetch(`/api/buys?page=${page}&limit=${limit}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                displayBuyData(data.data);
+                updatePagination(data.pagination);
+                scrollToTop();
+            } catch (error) {
+                console.error('Error loading buy data:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <h3>Error Loading Data</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayBuyData(buys) {
+            const contentDiv = document.getElementById('content');
+            
+            if (buys.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="loading">
+                        <p>No buy data available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const buysList = buys.map(buy => {
+                const buyPrice = buy.buy_price ? (buy.buy_price / 1000000).toFixed(2) : 'N/A';
+                const salePrice = buy.sale_price ? (buy.sale_price / 1000000).toFixed(2) : 'N/A';
+                const thumbnailUrl = `https://assets.objkt.media/file/assets-003/${buy.token.fa_contract}/${buy.token.token_id}/thumb400`;
+                return `
+                    <div class="sale-item">
+                        <a href="https://objkt.com/tokens/${buy.token.fa_contract}/${buy.token.token_id}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="thumbnail-link">
+                            <img class="token-thumbnail" 
+                                 src="${thumbnailUrl}" 
+                                 alt="Token thumbnail"
+                                 onerror="this.onerror=null; this.classList.add('error'); this.src=''; this.innerHTML='No Image';">
+                        </a>
+                        <div class="sale-content">
+                            <div class="token-info">
+                                <div class="token-details">
+                                    <div class="token-name">${buy.token.name || 'Unnamed Token'}</div>
+                                    <div class="token-id">Token ID: ${buy.token.token_id}</div>
+                                    <div class="token-contract">Contract: ${buy.token.fa_contract}</div>
+                                </div>
+                                <div class="price-info">
+                                    <div class="sale-price">${buyPrice} XTZ</div>
+                                    <div class="buy-price">Sold: ${salePrice} XTZ</div>
+                                </div>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-item">
+                                    <div class="transaction-label">Buy Seller:</div>
+                                    <div class="transaction-value">${buy.buy_seller || ''}</div>
+                                </div>
+                                <div class="transaction-item">
+                                    <div class="transaction-label">Buy Hash:</div>
+                                    <div class="transaction-value"><a target="_blank" href="https://tzkt.io/${buy.buy_ophash}">${buy.buy_ophash}</a></div>
+                                </div>
+                                <div class="transaction-item">
+                                    <div class="transaction-label">Buy Amount:</div>
+                                    <div class="transaction-value">${buy.buy_amount}</div>
+                                </div>
+                                <div class="transaction-item">
+                                    <div class="transaction-label">Timestamp:</div>
+                                    <div class="transaction-value">${new Date(buy.buy_timestamp || buy.token.timestamp).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            contentDiv.innerHTML = `<div class="sales-list">${buysList}</div>`;
+        }
+
+        function updatePagination(pagination) {
+            currentPage = pagination.page;
+            totalPages = pagination.totalPages;
+            totalRecords = pagination.totalRecords;
+
+            const paginationInfo = `Showing ${((currentPage - 1) * limit) + 1} to ${Math.min(currentPage * limit, totalRecords)} of ${totalRecords} records`;
+            const pageInfo = `Page ${currentPage} of ${totalPages}`;
+            
+            // Update top pagination
+            document.getElementById('pagination-info').textContent = paginationInfo;
+            document.getElementById('page-info').textContent = pageInfo;
+            document.getElementById('prev-btn').disabled = !pagination.hasPrev;
+            document.getElementById('next-btn').disabled = !pagination.hasNext;
+            document.getElementById('page-input').value = currentPage;
+            document.getElementById('page-input').max = totalPages;
+            
+            // Update bottom pagination
+            document.getElementById('pagination-info-bottom').textContent = paginationInfo;
+            document.getElementById('page-info-bottom').textContent = pageInfo;
+            document.getElementById('prev-btn-bottom').disabled = !pagination.hasPrev;
+            document.getElementById('next-btn-bottom').disabled = !pagination.hasNext;
+            document.getElementById('page-input-bottom').value = currentPage;
+            document.getElementById('page-input-bottom').max = totalPages;
+        }
+
+        function goToPage() {
+            const pageInput = document.getElementById('page-input');
+            const page = parseInt(pageInput.value);
+            
+            if (page && page >= 1 && page <= totalPages) {
+                loadBuyData(page);
+            } else {
+                alert(`Please enter a valid page number between 1 and ${totalPages}`);
+                pageInput.value = currentPage;
+            }
+        }
+
+        // Handle Enter key in page input
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('page-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    goToPage();
+                }
+            });
+            
+            document.getElementById('page-input-bottom').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    goToPage();
+                }
+            });
+        });
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                loadBuyData(currentPage + 1);
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                loadBuyData(currentPage - 1);
+            }
+        }
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBuyData(1);
+        });
+    </script>
+</body>
+</html> 
