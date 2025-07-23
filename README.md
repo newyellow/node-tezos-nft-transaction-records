@@ -79,22 +79,55 @@ cd node--tezos-records
 npm install
 ```
 
-3. **Configure the data source**
-   - Edit `getRecords.js` to set your Tezos wallet address
-   - Modify GraphQL queries if needed for different data requirements
+3. **Configure your Tezos wallet address**
+   
+   **Important**: The default configuration uses a sample wallet address. To view your own transaction data, you need to change the wallet address in `getRecords.js`.
+   
+   Open `getRecords.js` and locate the `DEFAULT_VARIABLES` section:
+   ```javascript
+   DEFAULT_VARIABLES: {
+       address: "tz1RPZp6NLzn7x4g7jhqHtCkhCQVnhbVMj8y",  // ← Change this address
+       offset: 0
+   }
+   ```
+   
+   **Replace the address with your Tezos wallet address:**
+   - Find your Tezos wallet address (starts with `tz1`, `tz2`, or `tz3`)
+   - Replace `"tz1RPZp6NLzn7x4g7jhqHtCkhCQVnhbVMj8y"` with your address
+   - Example: `address: "tz1YourWalletAddressHere"`
+   
+   **To find your Tezos wallet address:**
+   - Check your wallet app (Temple, Kukai, etc.)
+   - Look at your wallet settings or account information
+   - The address format is: `tz1...`, `tz2...`, or `tz3...`
+
+**Example of changing the address:**
+```javascript
+// Before (default address)
+DEFAULT_VARIABLES: {
+    address: "tz1RPZp6NLzn7x4g7jhqHtCkhCQVnhbVMj8y",
+    offset: 0
+}
+
+// After (your address)
+DEFAULT_VARIABLES: {
+    address: "tz1YourActualWalletAddressHere",
+    offset: 0
+}
+```
 
 4. **Fetch and process data**
 ```bash
-# Fetch raw data from objkt.com
+# Fetch raw data from objkt.com for your wallet address
 npm start
 
-# Process sales records
+# Process sales records (enriches with purchase data)
 node process-sales-records.js
 
-# Process purchase records
+# Process purchase records (enriches with sale data)
 node process-bought-records.js
 
-# Optional: Reorder data by timestamp
+# Optional: Reorder data by timestamp for chronological view
 node reorder.js
 ```
 
@@ -106,6 +139,140 @@ npm run server
 6. **Access the application**
    - Open your browser to `http://localhost:3000`
    - Navigate between Home, Sales, and Buys pages
+
+### 📊 What happens when you run the data fetcher?
+
+When you run `npm start`, the script will:
+
+1. **Connect to objkt.com's GraphQL API** using your wallet address
+2. **Fetch sales data** - All NFTs you've sold (excluding your own creations)
+3. **Fetch purchase data** - All NFTs you've bought (excluding your own creations)
+4. **Save raw data** to `sourceData/sales_data.json` and `sourceData/bought_data.json`
+5. **Process and enrich data** when you run the processing scripts
+6. **Create final datasets** ready for the web interface
+
+**Note**: The script includes rate limiting (2-second delays) to respect objkt.com's API limits. For wallets with many transactions, this may take several minutes.
+
+### 🔍 Troubleshooting Address Issues
+
+**If you get no data:**
+- Verify your wallet address is correct (check for typos)
+- Ensure the address has NFT transactions on objkt.com
+- Try a different wallet address to test
+
+**If you get an error:**
+- Check your internet connection
+- Verify objkt.com's API is accessible
+- Ensure the wallet address format is correct (tz1..., tz2..., or tz3...)
+
+---
+
+## 🇹🇼 使用說明 (Traditional Chinese Instructions)
+
+### 前提條件
+- Node.js (v14 或更高版本)
+- npm 或 yarn 套件管理器
+
+### 安裝步驟
+
+1. **複製儲存庫**
+```bash
+git clone <repository-url>
+cd node--tezos-records
+```
+
+2. **安裝依賴**
+```bash
+npm install
+```
+
+3. **設定您的 Tezos 錢包地址**
+   
+   **重要提示**: 預設設定使用範例錢包地址。要查看您自己的交易資料，您需要在 `getRecords.js` 中更改錢包地址。
+   
+   開啟 `getRecords.js` 並找到 `DEFAULT_VARIABLES` 部分：
+   ```javascript
+   DEFAULT_VARIABLES: {
+       address: "tz1RPZp6NLzn7x4g7jhqHtCkhCQVnhbVMj8y",  // ← 更改此地址
+       offset: 0
+   }
+   ```
+   
+   **將地址替換為您的 Tezos 錢包地址:**
+   - 找到您的 Tezos 錢包地址（以 `tz1`、`tz2` 或 `tz3` 開頭）
+   - 將 `"tz1RPZp6NLzn7x4g7jhqHtCkhCQVnhbVMj8y"` 替換為您的地址
+   - 範例: `address: "tz1YourWalletAddressHere"`
+   
+   **如何找到您的 Tezos 錢包地址:**
+   - 查看您的錢包應用程式（Temple、Kukai 等）
+   - 查看錢包設定或帳戶資訊
+   - 地址格式為: `tz1...`、`tz2...` 或 `tz3...`
+
+   **更改地址範例:**
+   ```javascript
+   // 更改前（預設地址）
+   DEFAULT_VARIABLES: {
+       address: "tz1RPZp6NLzn7x4g7jhqHtCkhCQVnhbVMj8y",
+       offset: 0
+   }
+
+   // 更改後（您的地址）
+   DEFAULT_VARIABLES: {
+       address: "tz1YourActualWalletAddressHere",
+       offset: 0
+   }
+   ```
+
+4. **取得和處理資料**
+```bash
+# 從 objkt.com 取得您錢包地址的原始資料
+npm start
+
+# 處理銷售記錄（用購買資料豐富）
+node process-sales-records.js
+
+# 處理購買記錄（用銷售資料豐富）
+node process-bought-records.js
+
+# 可選：按時間戳重新排序以獲得時間順序檢視
+node reorder.js
+```
+
+5. **啟動網路伺服器**
+```bash
+npm run server
+```
+
+6. **存取應用程式**
+   - 在瀏覽器中開啟 `http://localhost:3000`
+   - 在首頁、銷售頁面和購買頁面之間導航
+
+### 📊 執行資料取得器時會發生什麼？
+
+當您執行 `npm start` 時，腳本將：
+
+1. **連接到 objkt.com 的 GraphQL API** 使用您的錢包地址
+2. **取得銷售資料** - 您賣出的所有 NFT（不包括您自己的創作）
+3. **取得購買資料** - 您購買的所有 NFT（不包括您自己的創作）
+4. **儲存原始資料** 到 `sourceData/sales_data.json` 和 `sourceData/bought_data.json`
+5. **處理並豐富資料** 當您執行處理腳本時
+6. **建立最終資料集** 準備用於網路介面
+
+**注意**: 腳本包含速率限制（2秒延遲）以尊重 objkt.com 的 API 限制。對於交易較多的錢包，這可能需要幾分鐘。
+
+### 🔍 地址問題故障排除
+
+**如果沒有資料:**
+- 驗證您的錢包地址是否正確（檢查拼寫錯誤）
+- 確保該地址在 objkt.com 上有 NFT 交易
+- 嘗試不同的錢包地址進行測試
+
+**如果出現錯誤:**
+- 檢查您的網路連線
+- 驗證 objkt.com 的 API 是否可存取
+- 確保錢包地址格式正確（tz1...、tz2... 或 tz3...）
+
+---
 
 ## 📡 API Endpoints
 
